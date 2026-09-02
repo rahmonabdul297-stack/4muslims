@@ -5,13 +5,17 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { FavoriteAyah, Plan, RecentAyah } from "./types";
+import type { FavoriteAyah, RecentAyah, User } from "./types";
+import { getMe, logout as apiLogout } from "./lib/authApi";
 
 type Route =
   | "landing"
   | "login"
   | "register"
   | "verify"
+  | "forgot-password"
+  | "reset-password"
+  | "payment-verify"
   | "dashboard"
   | "create"
   | "history"
@@ -24,11 +28,15 @@ type Route =
   | "quran-juz"
   | "prayer-times"
   | "duas"
-  | "quran-favorites";
+  | "quran-favorites"
+  | "profile"
+  | "admin-videos";
 
 const FAVORITES_KEY = "quran-favorites";
 const RECENT_KEY = "quran-recent";
 const RECENT_LIMIT = 15;
+
+type OAuthNotice = { type: "success" | "error"; message?: string };
 
 function readStorage<T>(key: string, fallback: T): T {
   try {
@@ -39,13 +47,56 @@ function readStorage<T>(key: string, fallback: T): T {
   }
 }
 
+/** Reads the real-URL landmarks the backend redirects to (OAuth/payment callbacks), then resets the URL to "/". */
+function consumeRedirectLandmark(): {
+  route: Route | null;
+  notice: OAuthNotice | null;
+  paymentReference: string | null;
+  resetToken: string | null;
+} {
+  const { pathname, search } = window.location;
+  const params = new URLSearchParams(search);
+  let route: Route | null = null;
+  let notice: OAuthNotice | null = null;
+  let paymentReference: string | null = null;
+  let resetToken: string | null = null;
+
+  if (pathname === "/dashboard") {
+    route = "create";
+    if (params.get("login") === "google")
+      notice = { type: "success", message: "Signed in with Google" };
+  } else if (pathname === "/login" && params.has("error")) {
+    route = "login";
+    notice = {
+      type: "error",
+      message: params.get("error") ?? "Sign in failed",
+    };
+  } else if (pathname === "/payment/verify") {
+    route = "payment-verify";
+    paymentReference = params.get("reference");
+  } else if (pathname === "/reset-password" && params.has("token")) {
+    route = "reset-password";
+    resetToken = params.get("token");
+  }
+
+  if (pathname !== "/") {
+    window.history.replaceState({}, "", "/");
+  }
+
+  return { route, notice, paymentReference, resetToken };
+}
+
 interface AppState {
   route: Route;
   navigate: (r: Route) => void;
-  plan: Plan;
-  setPlan: (p: Plan) => void;
-  rendersUsed: number;
-  incrementRenders: () => void;
+  user: User | null;
+  authLoading: boolean;
+  refreshUser: () => Promise<void>;
+  logout: () => Promise<void>;
+  oauthNotice: OAuthNotice | null;
+  clearOauthNotice: () => void;
+  paymentReference: string | null;
+  resetToken: string | null;
   quranSurahNumber: number;
   quranJuzNumber: number;
   openSurah: (n: number) => void;
@@ -61,8 +112,11 @@ const Ctx = createContext<AppState | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [route, setRoute] = useState<Route>("landing");
-  const [plan, setPlan] = useState<Plan>("FREE");
-  const [rendersUsed, setRendersUsed] = useState(2);
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [oauthNotice, setOauthNotice] = useState<OAuthNotice | null>(null);
+  const [paymentReference, setPaymentReference] = useState<string | null>(null);
+  const [resetToken, setResetToken] = useState<string | null>(null);
   const [quranSurahNumber, setQuranSurahNumber] = useState(1);
   const [quranJuzNumber, setQuranJuzNumber] = useState(1);
   const [favorites, setFavorites] = useState<FavoriteAyah[]>(() =>
@@ -86,6 +140,58 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setQuranJuzNumber(n);
     navigate("quran-juz");
   };
+
+  const refreshUser = async () => {
+    try {
+      const me = await getMe();
+      setUser(me);
+    } catch {
+      setUser(null);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await apiLogout();
+    } catch {
+      // ignore — clear local state regardless
+    }
+    setUser(null);
+    navigate("landing");
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    async function bootstrap() {
+      const landmark = consumeRedirectLandmark();
+      if (landmark.notice) setOauthNotice(landmark.notice);
+      if (landmark.paymentReference)
+        setPaymentReference(landmark.paymentReference);
+      if (landmark.resetToken) setResetToken(landmark.resetToken);
+
+      try {
+        const me = await getMe();
+        if (cancelled) return;
+        setUser(me);
+        setRoute(landmark.route ?? "create");
+      } catch {
+        if (cancelled) return;
+        setUser(null);
+        // A /dashboard landmark implies an OAuth redirect expected a session — bounce to login instead.
+        if (landmark.route && landmark.route !== "create") {
+          setRoute(landmark.route);
+        } else if (landmark.route === "create") {
+          setRoute("login");
+        }
+      } finally {
+        if (!cancelled) setAuthLoading(false);
+      }
+    }
+    bootstrap();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
@@ -117,21 +223,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  useEffect(() => {
-    const h = () => setRoute((prev) => prev);
-    window.addEventListener("popstate", h);
-    return () => window.removeEventListener("popstate", h);
-  }, []);
-
   return (
     <Ctx.Provider
       value={{
         route,
         navigate,
-        plan,
-        setPlan,
-        rendersUsed,
-        incrementRenders: () => setRendersUsed((n) => n + 1),
+        user,
+        authLoading,
+        refreshUser,
+        logout,
+        oauthNotice,
+        clearOauthNotice: () => setOauthNotice(null),
+        paymentReference,
+        resetToken,
         quranSurahNumber,
         quranJuzNumber,
         openSurah,

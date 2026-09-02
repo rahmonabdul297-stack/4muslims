@@ -11,21 +11,42 @@ import { IntegrationsPage } from "@/pages/Integrations";
 import { AutoPostPage } from "@/pages/AutoPost";
 import { BillingPage } from "@/pages/Billing";
 import { SettingsPage } from "@/pages/Settings";
-import { LoginPage, RegisterPage, VerifyPage } from "@/pages/Auth";
+import {
+  LoginPage,
+  RegisterPage,
+  VerifyPage,
+  ForgotPasswordPage,
+  ResetPasswordPage,
+} from "@/pages/Auth";
+import { PaymentVerifyPage } from "@/pages/PaymentVerify";
 import { QuranHomePage } from "@/pages/QuranHome";
 import { SurahDetailPage } from "@/pages/SurahDetail";
 import { JuzDetailPage } from "@/pages/JuzDetail";
 import { PrayerTimesPage } from "@/pages/PrayerTimes";
 import { DuasPage } from "@/pages/Duas";
 import { QuranFavoritesPage } from "@/pages/QuranFavorites";
+import { ProfilePage } from "@/pages/Profile";
+import { AdminVideosPage } from "@/pages/AdminVideos";
+import { Loader2 } from "lucide-react";
 
 function Router() {
-  const { route } = useApp();
+  const { route, authLoading, user } = useApp();
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-emerald-mint animate-spin" />
+      </div>
+    );
+  }
 
   if (route === "landing") return <LandingPage />;
   if (route === "login") return <LoginPage />;
   if (route === "register") return <RegisterPage />;
   if (route === "verify") return <VerifyPage />;
+  if (route === "forgot-password") return <ForgotPasswordPage />;
+  if (route === "reset-password") return <ResetPasswordPage />;
+  if (route === "payment-verify") return <PaymentVerifyPage />;
 
   return (
     <DashboardLayout>
@@ -41,6 +62,10 @@ function Router() {
       {route === "prayer-times" && <PrayerTimesPage />}
       {route === "duas" && <DuasPage />}
       {route === "quran-favorites" && <QuranFavoritesPage />}
+      {route === "profile" && <ProfilePage />}
+      {route === "admin-videos" && user?.role === "admin" && (
+        <AdminVideosPage />
+      )}
     </DashboardLayout>
   );
 }

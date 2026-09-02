@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -22,50 +22,120 @@ import {
   Field,
   ProgressRing,
   Modal,
+  EmptyState,
 } from "@/components/ui";
-import { TemplateThumbnail } from "@/components/TemplateThumb";
-import { surahs, reciters, templates } from "@/data";
+import { VideoCardThumb } from "@/components/TemplateThumb";
+import { surahs, reciters, templates, planTierLimits } from "@/data";
 import { useApp } from "@/store";
 import { useToast } from "@/toast";
-import type { Plan } from "@/types";
-
-const planLimits: Record<
-  Plan,
-  { duration: number; watermark: boolean; resolution: string }
-> = {
-  FREE: { duration: 15, watermark: true, resolution: "480p" },
-  PRO: { duration: 60, watermark: false, resolution: "1080p" },
-  ULTIMATE: { duration: 180, watermark: false, resolution: "4K" },
-};
+import { ApiError } from "@/lib/apiClient";
+import { generateVideo, getVideoStatus } from "@/lib/videoApi";
+import { getAdminVideos } from "@/lib/adminApi";
+import type { GeneratedVideo, VideoJobStatus } from "@/types";
 
 export function StudioPage() {
-  const { plan, incrementRenders, rendersUsed } = useApp();
+  const { user, refreshUser } = useApp();
   const { push } = useToast();
   const [surah, setSurah] = useState(1);
   const [ayah, setAyah] = useState(1);
-  const [reciter, setReciter] = useState("afasy");
-  const [templateId, setTemplateId] = useState("emerald-glow");
+  const [reciter, setReciter] = useState(reciters[0].id);
+  const [templateId, setTemplateId] = useState("");
+  const [videoTemplates, setVideoTemplates] = useState<GeneratedVideo[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(true);
+  const [templatesError, setTemplatesError] = useState("");
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [arabicOverride, setArabicOverride] = useState("");
   const [translationOverride, setTranslationOverride] = useState("");
   const [rendering, setRendering] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState<
-    "idle" | "pending" | "processing" | "completed"
-  >("idle");
+  const [status, setStatus] = useState<"idle" | VideoJobStatus>("idle");
+  const [outputUrl, setOutputUrl] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const pollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (pollTimeout.current) clearTimeout(pollTimeout.current);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    getAdminVideos()
+      .then((data) => {
+        if (cancelled) return;
+        setVideoTemplates(data);
+        if (data.length) setTemplateId((prev) => prev || data[0]._id);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setTemplatesError(
+            err instanceof ApiError ? err.message : "Unable to load templates.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setTemplatesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const selectedSurah = surahs.find((s) => s.number === surah)!;
-  const selectedTemplate = templates.find((t) => t.id === templateId)!;
-  const limits = planLimits[plan];
-  const limit = plan === "FREE" ? 3 : plan === "PRO" ? 50 : Infinity;
-  const atLimit = rendersUsed >= limit;
+  const selectedTemplate = videoTemplates.find((v) => v._id === templateId);
+  const selectedTemplateStyle = templates.find(
+    (t) => t.id === selectedTemplate?.templateId,
+  );
+  const plan = user?.plan ?? "FREE";
+  const limits = planTierLimits[plan];
+  const limit = limits.manualRendersPerMonth;
+  const rendersUsed = user?.monthlyUsage?.manualGenerationsCount ?? 0;
+  const atLimit = limit !== -1 && rendersUsed >= limit;
 
-  const startRender = () => {
+  const pollStatus = (jobId: string) => {
+    pollTimeout.current = setTimeout(async () => {
+      try {
+        const res = await getVideoStatus(jobId);
+        setStatus(res.status);
+        setProgress(res.progress ?? 0);
+        if (res.status === "completed") {
+          setOutputUrl(res.outputUrl);
+          refreshUser();
+          push("Video render completed successfully!", "success");
+        } else if (res.status === "failed") {
+          setErrorMessage(
+            res.errorMessage || "Rendering failed. Please try again.",
+          );
+          push(
+            res.errorMessage || "Rendering failed. Please try again.",
+            "error",
+          );
+        } else {
+          pollStatus(jobId);
+        }
+      } catch (err) {
+        setStatus("failed");
+        setErrorMessage(
+          err instanceof ApiError
+            ? err.message
+            : "Lost connection while checking render status.",
+        );
+      }
+    }, 2500);
+  };
+
+  const startRender = async () => {
     if (atLimit) {
       push(
         "You have reached your monthly render limit. Upgrade to continue.",
         "error",
       );
+      return;
+    }
+    if (!templateId) {
+      push("Choose a template first", "error");
       return;
     }
     if (ayah > selectedSurah.ayahs) {
@@ -74,20 +144,30 @@ export function StudioPage() {
     }
     setRendering(true);
     setProgress(0);
+    setOutputUrl("");
+    setErrorMessage("");
     setStatus("pending");
-    let p = 0;
-    const interval = setInterval(() => {
-      p += Math.random() * 12 + 3;
-      if (p >= 30) setStatus("processing");
-      if (p >= 100) {
-        p = 100;
-        setStatus("completed");
-        clearInterval(interval);
-        incrementRenders();
-        push("Video render completed successfully!", "success");
-      }
-      setProgress(Math.min(p, 100));
-    }, 400);
+    try {
+      const result = await generateVideo({
+        templateId,
+        surahNumber: surah,
+        ayahNumber: ayah,
+        reciterId: reciter,
+        arabicText: arabicOverride || undefined,
+        translationText: translationOverride || undefined,
+        surahName: selectedSurah.name,
+      });
+      setStatus(result.status);
+      pollStatus(result.jobId);
+    } catch (err) {
+      setStatus("failed");
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : "Unable to start rendering. Please try again.";
+      setErrorMessage(message);
+      push(message, "error");
+    }
   };
 
   const statusSteps = [
@@ -236,38 +316,65 @@ export function StudioPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 max-h-[460px] overflow-y-auto scrollbar-thin pr-1">
-              {templates.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setTemplateId(t.id)}
-                  className={`group relative rounded-xl overflow-hidden border-2 transition-all duration-300 ${
-                    templateId === t.id
-                      ? "border-emerald-mint shadow-glow scale-[1.02]"
-                      : "border-transparent hover:border-ink-overlay/20 hover:scale-[1.02]"
-                  }`}
-                >
-                  <TemplateThumbnail
-                    template={t}
-                    surahArabic={selectedSurah.arabic}
-                    className="aspect-[9/16]"
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/60 backdrop-blur-sm">
-                    <p className="text-[10px] font-medium text-white text-left truncate">
-                      {t.name}
-                    </p>
-                    <p className="text-[8px] text-white/60 text-left">
-                      {t.motion}
-                    </p>
-                  </div>
-                  {templateId === t.id && (
-                    <div className="absolute top-1.5 left-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-mint fill-emerald-mint/20" />
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
+            {templatesLoading ? (
+              <div className="flex items-center justify-center py-10 text-slate-400 gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" /> Loading
+                templates...
+              </div>
+            ) : templatesError ? (
+              <EmptyState
+                icon={<AlertCircle className="w-7 h-7" />}
+                title="Couldn't load templates"
+                description={templatesError}
+              />
+            ) : videoTemplates.length === 0 ? (
+              <EmptyState
+                icon={<Sparkles className="w-7 h-7" />}
+                title="No templates available"
+                description="No admin-published templates were found yet."
+              />
+            ) : (
+              <div className="grid grid-cols-2 gap-3 max-h-[460px] overflow-y-auto scrollbar-thin pr-1">
+                {videoTemplates.map((t) => {
+                  const style = templates.find(
+                    (tpl) => tpl.id === t.templateId,
+                  );
+                  return (
+                    <button
+                      key={t._id}
+                      onClick={() => setTemplateId(t._id)}
+                      className={`group relative rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                        templateId === t._id
+                          ? "border-emerald-mint shadow-glow scale-[1.02]"
+                          : "border-transparent hover:border-ink-overlay/20 hover:scale-[1.02]"
+                      }`}
+                    >
+                      <VideoCardThumb
+                        gradient={
+                          style?.gradient ?? "from-emerald-deep to-emerald-mint"
+                        }
+                        arabicText={t.arabicText || selectedSurah.arabic}
+                        className="aspect-[9/16]"
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/60 backdrop-blur-sm">
+                        <p className="text-[10px] font-medium text-white text-left truncate">
+                          {style?.name ?? t.templateId}
+                        </p>
+                        <p className="text-[8px] text-white/60 text-left truncate">
+                          Surah {t.surahNumber}
+                          {t.surahName ? `: ${t.surahName}` : ""}
+                        </p>
+                      </div>
+                      {templateId === t._id && (
+                        <div className="absolute top-1.5 left-1.5">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-mint fill-emerald-mint/20" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </GlassCard>
         </div>
 
@@ -309,15 +416,17 @@ export function StudioPage() {
                     Max Duration
                   </p>
                   <p className="text-xs font-semibold text-ink-text">
-                    {limits.duration}s
+                    {limits.maxClipSeconds}s
                   </p>
                 </div>
                 <div className="rounded-lg bg-ink-overlay/[0.03] py-1.5">
                   <p className="text-[9px] text-slate-500 uppercase">
-                    Resolution
+                    Auto-Post/mo
                   </p>
                   <p className="text-xs font-semibold text-ink-text">
-                    {limits.resolution}
+                    {limits.autoPostsPerMonth === -1
+                      ? "∞"
+                      : limits.autoPostsPerMonth}
                   </p>
                 </div>
                 <div className="rounded-lg bg-ink-overlay/[0.03] py-1.5">
@@ -340,8 +449,14 @@ export function StudioPage() {
                 label="Reciter"
                 value={reciters.find((r) => r.id === reciter)?.name ?? ""}
               />
-              <Row label="Template" value={selectedTemplate.name} />
-              <Row label="Motion" value={selectedTemplate.motion} />
+              <Row
+                label="Template"
+                value={
+                  selectedTemplateStyle?.name ??
+                  selectedTemplate?.templateId ??
+                  "—"
+                }
+              />
             </div>
 
             {atLimit && (
@@ -358,15 +473,15 @@ export function StudioPage() {
               className="w-full"
               size="lg"
               onClick={startRender}
-              disabled={atLimit || rendering}
+              disabled={atLimit || rendering || !templateId}
               loading={rendering}
             >
               <Sparkles className="w-4 h-4" />
               Generate Video
             </Button>
             <p className="text-center text-[11px] text-slate-500 mt-2">
-              {limit === Infinity ? "Unlimited" : `${rendersUsed}/${limit}`}{" "}
-              renders used this month
+              {limit === -1 ? "Unlimited" : `${rendersUsed}/${limit}`} renders
+              used this month
             </p>
           </GlassCard>
         </div>
@@ -375,7 +490,10 @@ export function StudioPage() {
       {/* Render Progress Modal */}
       <Modal
         open={rendering}
-        onClose={() => status === "completed" && setRendering(false)}
+        onClose={() => {
+          if (status === "completed" || status === "failed")
+            setRendering(false);
+        }}
         className="max-w-md"
       >
         <div className="p-6">
@@ -419,16 +537,22 @@ export function StudioPage() {
             {status === "completed" ? (
               <div className="w-full">
                 <div className="relative rounded-xl overflow-hidden bg-ink-page border border-ink-overlay/10 mb-3 aspect-video">
-                  <TemplateThumbnail
-                    template={selectedTemplate}
-                    surahArabic={selectedSurah.arabic}
-                    className="absolute inset-0 w-full h-full"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <button className="w-12 h-12 rounded-full bg-ink-overlay/20 backdrop-blur-sm flex items-center justify-center hover:bg-ink-overlay/30 transition">
-                      <Play className="w-5 h-5 text-ink-text fill-white" />
-                    </button>
-                  </div>
+                  {outputUrl ? (
+                    <video
+                      src={outputUrl}
+                      controls
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : (
+                    <VideoCardThumb
+                      gradient={
+                        selectedTemplateStyle?.gradient ??
+                        "from-emerald-deep to-emerald-mint"
+                      }
+                      arabicText={selectedSurah.arabic}
+                      className="absolute inset-0 w-full h-full"
+                    />
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -436,17 +560,32 @@ export function StudioPage() {
                     onClick={() => setRendering(false)}
                   >
                     <Play className="w-3.5 h-3.5" />
-                    Play Preview
+                    Done
                   </Button>
-                  <Button
-                    variant="secondary"
+                  <a
+                    href={outputUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex-1"
-                    onClick={() => push("Download started", "success")}
                   >
-                    <Download className="w-3.5 h-3.5" />
-                    Download MP4
-                  </Button>
+                    <Button variant="secondary" className="w-full">
+                      <Download className="w-3.5 h-3.5" />
+                      Download MP4
+                    </Button>
+                  </a>
                 </div>
+              </div>
+            ) : status === "failed" ? (
+              <div className="w-full text-center">
+                <div className="flex items-start gap-2 rounded-lg bg-red-500/10 border border-red-500/20 p-3 mb-3 text-left">
+                  <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
+                  <p className="text-xs text-red-300">
+                    {errorMessage || "Rendering failed. Please try again."}
+                  </p>
+                </div>
+                <Button className="w-full" onClick={() => setRendering(false)}>
+                  Close
+                </Button>
               </div>
             ) : (
               <Badge tone="emerald">

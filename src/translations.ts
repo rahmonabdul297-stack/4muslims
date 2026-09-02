@@ -24,6 +24,8 @@ const en: Dict = {
   "nav.favorites": "Favorites",
   "nav.billing": "Billing",
   "nav.settings": "Settings",
+  "nav.profile": "Profile",
+  "nav.adminVideos": "Admin Videos",
   "nav.free": "Free",
   "nav.home": "Home",
 

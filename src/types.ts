@@ -1,27 +1,120 @@
 export type Plan = "FREE" | "PRO" | "ULTIMATE";
 
-export type RenderStatus = "Completed" | "Processing" | "Failed" | "Pending";
+export type AuthProvider = "google" | "apple" | "email";
+export type SubscriptionStatus =
+  | "active"
+  | "inactive"
+  | "cancelled"
+  | "expired";
+export type PostFrequency = "5_PER_MONTH" | "DAILY";
+export type VideoJobStatus = "pending" | "processing" | "completed" | "failed";
+export type AutoPostPlatform = "youtube" | "tiktok" | "facebook";
 
-export interface VideoRecord {
-  id: string;
-  surah: number;
-  surahName: string;
-  ayah: number;
-  reciter: string;
-  template: string;
-  duration: number;
-  status: RenderStatus;
-  createdAt: string;
-  thumbnail: string;
+export interface MonthlyUsage {
+  videosGenerated: number;
+  lastResetDate: string;
+  manualGenerationsCount: number;
+  autoGenerationsCount: number;
 }
 
-export interface UserState {
+export interface AutoPostSettings {
+  enabled: boolean;
+  selectedPlatform: AutoPostPlatform;
+  defaultReciterId?: string;
+  postFrequency: PostFrequency;
+  lastAutoPostDate?: string;
+  monthlyAutoPostCount: number;
+}
+
+export interface SocialProfileLink {
+  connected?: boolean;
+  handle?: string;
+  [key: string]: unknown;
+}
+
+export interface User {
+  _id: string;
   name: string;
   email: string;
+  phone?: string;
+  profileImage?: string;
+  authProvider: AuthProvider;
+  subscriptionStatus: SubscriptionStatus;
   plan: Plan;
-  avatar: string;
-  rendersUsed: number;
-  rendersLimit: number;
+  role?: "user" | "admin";
+  isVerified: boolean;
+  premiumExpiresAt?: string | null;
+  monthlyUsage?: MonthlyUsage;
+  socialProfiles?: {
+    youtube?: SocialProfileLink;
+    tiktok?: SocialProfileLink;
+    facebook?: SocialProfileLink;
+  };
+  autoPostSettings?: AutoPostSettings;
+}
+
+export interface GeneratedVideo {
+  _id: string;
+  jobId: string;
+  userId: string;
+  templateId: string;
+  surahNumber: number;
+  ayahNumber: number;
+  reciterId: string;
+  arabicText: string;
+  translationText: string;
+  audioUrl: string;
+  surahName?: string;
+  status: VideoJobStatus;
+  progress: number;
+  outputUrl: string;
+  errorMessage: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VideoStatusResponse {
+  status: VideoJobStatus;
+  progress: number;
+  outputUrl: string;
+  errorMessage: string;
+}
+
+export interface GenerateVideoPayload {
+  templateId: string;
+  surahNumber: number;
+  ayahNumber: number;
+  reciterId: string;
+  arabicText?: string;
+  translationText?: string;
+  surahName?: string;
+}
+
+export interface GenerateVideoResult {
+  jobId: string;
+  renderId: string;
+  status: VideoJobStatus;
+  usage: { used: number; limit: number };
+}
+
+export interface CheckoutSummary {
+  tier: Plan;
+  durationMonths: number;
+  monthlyRate: number;
+  totalAmount: number;
+  currency: string;
+}
+
+export interface CheckoutResult {
+  checkoutUrl: string;
+  reference: string;
+  summary: CheckoutSummary;
+}
+
+export interface AutoPostSettingsData {
+  planTier: Plan;
+  settings: AutoPostSettings;
+  rules: { allowedFrequency: string; [key: string]: unknown };
 }
 
 export interface Reciter {
@@ -42,6 +135,7 @@ export interface VideoTemplate {
 export interface Integration {
   id: string;
   platform: string;
+  key: AutoPostPlatform;
   connected: boolean;
   handle?: string;
   followers?: string;
