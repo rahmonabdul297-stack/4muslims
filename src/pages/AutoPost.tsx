@@ -125,7 +125,7 @@ export function AutoPostPage() {
             <Button
               variant="gold"
               size="lg"
-              onClick={() => navigate("billing")}
+              onClick={() => navigate("/billing")}
             >
               <Lock className="w-4 h-4" />
               Upgrade to PRO
@@ -164,7 +164,7 @@ export function AutoPostPage() {
             <Button
               variant="gold"
               className="w-full mt-5"
-              onClick={() => navigate("billing")}
+              onClick={() => navigate("/billing")}
             >
               Upgrade Now
             </Button>

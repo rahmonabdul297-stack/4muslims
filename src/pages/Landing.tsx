@@ -21,6 +21,7 @@ import { Button, GlassCard, Badge } from "@/components/ui";
 import { TemplateThumbnail } from "@/components/TemplateThumb";
 import { templates, surahs, pricingPlans } from "@/data";
 import Advert from "./advert";
+import { useNavigate } from "react-router-dom";
 
 function Logo() {
   return (
@@ -67,7 +68,7 @@ function QuickSettings() {
 }
 
 export function LandingPage() {
-  const { navigate } = useApp();
+  const navigate = useNavigate(); // Use React Router hook instead of useApp
   const { t } = useLanguage();
 
   const freeFeatures = [
@@ -101,10 +102,14 @@ export function LandingPage() {
           <Logo />
           <div className="flex items-center gap-3">
             <QuickSettings />
-            <Button variant="ghost" size="sm" onClick={() => navigate("login")}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/login")}
+            >
               {t("landing.ctaSecondary")}
             </Button>
-            <Button size="sm" onClick={() => navigate("register")}>
+            <Button size="sm" onClick={() => navigate("/register")}>
               {t("landing.ctaPrimary")}
             </Button>
           </div>
@@ -137,14 +142,14 @@ export function LandingPage() {
             </p>
 
             <div className="flex flex-wrap items-center gap-3 mb-8">
-              <Button size="lg" onClick={() => navigate("register")}>
+              <Button size="lg" onClick={() => navigate("/register")}>
                 {t("landing.ctaPrimary")}
                 <ArrowRight className="w-4 h-4" />
               </Button>
               <Button
                 size="lg"
                 variant="secondary"
-                onClick={() => navigate("login")}
+                onClick={() => navigate("/login")}
               >
                 {t("landing.ctaSecondary")}
               </Button>
@@ -167,7 +172,7 @@ export function LandingPage() {
           </div>
 
           <div className="relative flex justify-center animate-fade-in">
-           <Advert/>
+            <Advert />
           </div>
         </div>
       </section>
@@ -231,7 +236,7 @@ export function LandingPage() {
                 </li>
               ))}
             </ul>
-            <Button onClick={() => navigate("register")}>
+            <Button onClick={() => navigate("/register")}>
               {t("landing.pricing.cta")}
               <ArrowRight className="w-4 h-4" />
             </Button>
@@ -264,7 +269,7 @@ export function LandingPage() {
               <Button
                 variant={p.highlight ? "primary" : "secondary"}
                 className="w-full"
-                onClick={() => navigate("register")}
+                onClick={() => navigate("/register")}
               >
                 {t("landing.ctaPrimary")}
               </Button>

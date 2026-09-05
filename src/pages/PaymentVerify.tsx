@@ -76,7 +76,7 @@ export function PaymentVerifyPage() {
               Payment successful
             </h2>
             <p className="text-sm text-slate-500 mb-6">{message}</p>
-            <Button className="w-full" onClick={() => navigate("billing")}>
+            <Button className="w-full" onClick={() => navigate("/billing")}>
               Go to Billing
             </Button>
           </>
@@ -92,7 +92,7 @@ export function PaymentVerifyPage() {
             <Button
               variant="secondary"
               className="w-full"
-              onClick={() => navigate("billing")}
+              onClick={() => navigate("/billing")}
             >
               Back to Billing
             </Button>

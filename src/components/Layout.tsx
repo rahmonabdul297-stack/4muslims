@@ -140,9 +140,9 @@ export function Sidebar() {
   );
 
   const Logo = () => (
-   <div className="flex flex-col items-start">
+    <div className="flex flex-col items-start">
       <img src="/images/4muslims_logo.png" className="h-12 w-[150px]" />
-       <i className="text-[8px] px-3 text-[#767373]">Qur'an Studio.</i>
+      <i className="text-[8px] px-3 text-[#767373]">Qur'an Studio.</i>
     </div>
   );
 
@@ -255,7 +255,7 @@ export function TopBar() {
             <Button
               size="sm"
               variant="gold"
-              onClick={() => navigate("billing")}
+              onClick={() => navigate("/billing")}
             >
               <Sparkles className="w-3.5 h-3.5" />
               Upgrade Plan

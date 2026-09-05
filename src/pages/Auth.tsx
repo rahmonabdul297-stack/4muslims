@@ -8,6 +8,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Eye,
+  EyeOff,
 } from "lucide-react";
 import { Button, Input, Field } from "@/components/ui";
 import { TemplateThumbnail } from "@/components/TemplateThumb";
@@ -23,6 +24,7 @@ import {
   resetPassword,
   googleLoginUrl,
 } from "@/lib/authApi";
+import { useNavigate } from "react-router-dom";
 
 function AuthShell({ children }: { children: ReactNode }) {
   return (
@@ -48,8 +50,8 @@ function AuthShell({ children }: { children: ReactNode }) {
             Create Beautiful Quran Videos
           </h2>
           <p className="text-sm text-slate-400 text-center leading-relaxed">
-         Qur'an video generator with auto-posting to your social
-            platforms. Spread da'wah, one frame at a time.
+            Qur'an video generator with auto-posting to your social platforms.
+            Spread da'wah, one frame at a time.
           </p>
 
           <div className="flex items-center justify-center gap-4 mt-8 text-xs text-slate-500">
@@ -58,7 +60,7 @@ function AuthShell({ children }: { children: ReactNode }) {
               Surahs
             </span>
             <span className="flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-mint" /> 5
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-mint" /> Best
               Reciters
             </span>
             <span className="flex items-center gap-1">
@@ -73,10 +75,10 @@ function AuthShell({ children }: { children: ReactNode }) {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-sm animate-fade-in">
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-           <div className="flex flex-col items-start">
-      <img src="/images/4muslims_logo.png" className="h-12 w-[150px]" />
-       <i className="text-[8px] px-3 text-[#767373]">Qur'an Studio.</i>
-    </div>
+            <div className="flex flex-col items-start">
+              <img src="/images/4muslims_logo.png" className="h-12 w-[150px]" />
+              <i className="text-[8px] px-3 text-[#767373]">Qur'an Studio.</i>
+            </div>
           </div>
           {children}
         </div>
@@ -118,16 +120,58 @@ function GoogleButton({ label }: { label: string }) {
 }
 
 export function LoginPage() {
-  const { navigate, refreshUser, oauthNotice, clearOauthNotice } = useApp();
+  const { refreshUser, oauthNotice, clearOauthNotice } = useApp();
+  const navigate = useNavigate();
   const { push } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPass,setShowpass]= useState(false)
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPass, setShowPass] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {},
   );
   const [loading, setLoading] = useState(false);
+//   const SIGN_URL = `${import.meta.env.VITE_API_BASE_URL}/auth/login`;
+//  const signIn = async () => {
+//   try {
+//     const response = await fetch(SIGN_URL, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         Accept: "application/json",
+//       },
+//       body: JSON.stringify({ email, password }),
+//     });
 
+//     const data = await response.json();
+
+//     if (!response.ok) {
+//       throw new Error(
+//         data.message || "Invalid credentials. Please try again."
+//       );
+//     }
+
+//     // 1. Store auth credentials
+//     if (data.token) {
+//       localStorage.setItem("token", data.token);
+//     }
+
+//     // 2. Refresh global user state so protected routes register the login
+//     await refreshUser(); 
+
+//     push("Logged in successfully!", "success");
+
+//     // 3. Navigate ONLY after successful token storage & state update
+//     navigate("/profile");
+
+//   } catch (error) {
+//     const errorMessage = (error as Error).message;
+//     console.error("Login failed:", errorMessage);
+//     push(errorMessage, "error");
+//   }
+// };
+
+  // Fix 1: Properly track dependencies to catch OAuth redirects
   useEffect(() => {
     if (!oauthNotice) return;
     push(
@@ -138,8 +182,7 @@ export function LoginPage() {
       oauthNotice.type,
     );
     clearOauthNotice();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [oauthNotice, push, clearOauthNotice]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,10 +192,12 @@ export function LoginPage() {
       errs.password = "Password must be at least 8 characters";
     setErrors(errs);
     if (Object.keys(errs).length) return;
+
     setLoading(true);
     try {
       await apiLogin(email, password);
       const me = await refreshUser();
+      console.log(me)
       if (!me) {
         push(
           "Signed in, but no session was returned. Please try again.",
@@ -161,7 +206,7 @@ export function LoginPage() {
         return;
       }
       push("Welcome back!", "success");
-      navigate("profile");
+      navigate("/profile");
     } catch (err) {
       push(
         err instanceof ApiError
@@ -190,7 +235,7 @@ export function LoginPage() {
           <div className="flex-1 h-px bg-ink-overlay/10" />
         </div>
 
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit}  className="space-y-4">
           <Field label="Email" error={errors.email}>
             <div className="relative">
               <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -209,35 +254,49 @@ export function LoginPage() {
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <Input
-                type={showPass?"text":"password"}
+                type={showPass ? "text" : "password"}
                 placeholder="••••••••"
                 value={password}
                 error={!!errors.password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10"
+                className="pl-10 pr-10"
               />
-              <Eye className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" onClick={()=>setShowpass(!showPass)}/>
+              {/* Fix 2: Accessible button wrapper with dynamic Eye/EyeOff icons */}
+              <button
+                type="button"
+                onClick={() => setShowPass(!showPass)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 focus:outline-none"
+              >
+                {showPass ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
             </div>
           </Field>
 
           <div className="flex items-center justify-between text-xs">
+            {/* Fix 3: Controlled state for rememberMe */}
             <label className="flex items-center gap-2 text-slate-400 cursor-pointer">
               <input
                 type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
                 className="rounded border-ink-overlay/20 bg-transparent accent-emerald-mint"
               />
               Remember me
             </label>
             <button
               type="button"
-              onClick={() => navigate("forgot-password")}
+              onClick={() => navigate("/forgot-password")}
               className="text-emerald-mint hover:text-emerald-400"
             >
               Forgot password?
             </button>
           </div>
 
-          <Button type="submit" className="w-full" size="lg" loading={loading}>
+          <Button type="submit" size="lg" loading={loading} className="w-full">
             Sign In
             <ArrowRight className="w-4 h-4" />
           </Button>
@@ -246,7 +305,8 @@ export function LoginPage() {
         <p className="text-center text-sm text-slate-500">
           Don't have an account?{" "}
           <button
-            onClick={() => navigate("register")}
+            type="button"
+            onClick={() => navigate("/register")}
             className="text-emerald-mint hover:text-emerald-400 font-medium"
           >
             Create one
@@ -258,7 +318,7 @@ export function LoginPage() {
 }
 
 export function RegisterPage() {
-  const { navigate } = useApp();
+  const navigate = useNavigate();
   const { push } = useToast();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -286,7 +346,7 @@ export function RegisterPage() {
         "Account created! Check your email for the verification code.",
         "success",
       );
-      navigate("verify");
+      navigate("/verify");
     } catch (err) {
       push(
         err instanceof ApiError
@@ -372,7 +432,7 @@ export function RegisterPage() {
         <p className="text-center text-sm text-slate-500">
           Already have an account?{" "}
           <button
-            onClick={() => navigate("login")}
+            onClick={() => navigate("/login")}
             className="text-emerald-mint hover:text-emerald-400 font-medium"
           >
             Sign in
@@ -384,7 +444,7 @@ export function RegisterPage() {
 }
 
 export function VerifyPage() {
-  const { navigate } = useApp();
+  const navigate = useNavigate();
   const { push } = useToast();
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -410,7 +470,7 @@ export function VerifyPage() {
     try {
       await verifyAccount(token);
       push("Email verified successfully! Please sign in.", "success");
-      navigate("login");
+      navigate("/login");
     } catch (err) {
       push(
         err instanceof ApiError
@@ -461,7 +521,7 @@ export function VerifyPage() {
 
         <button
           type="button"
-          onClick={() => navigate("login")}
+          onClick={() => navigate("/login")}
           className="block mx-auto text-xs text-slate-500 hover:text-slate-300"
         >
           Back to sign in
@@ -472,7 +532,7 @@ export function VerifyPage() {
 }
 
 export function ForgotPasswordPage() {
-  const { navigate } = useApp();
+  const navigate = useNavigate();
   const { push } = useToast();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -487,7 +547,7 @@ export function ForgotPasswordPage() {
     try {
       await forgotPasswordEmail(email);
       push("Password reset link sent to your email.", "success");
-      navigate("login");
+      navigate("/login");
     } catch (err) {
       push(
         err instanceof ApiError
@@ -529,7 +589,7 @@ export function ForgotPasswordPage() {
 
       <button
         type="button"
-        onClick={() => navigate("login")}
+        onClick={() => navigate("/login")}
         className="block mx-auto mt-5 text-xs text-slate-500 hover:text-slate-300"
       >
         Back to sign in
@@ -555,7 +615,7 @@ export function ResetPasswordPage() {
     try {
       await resetPassword(resetToken, resetUserId, newPassword);
       push("Password reset successfully. Please sign in.", "success");
-      navigate("login");
+      navigate("/login");
     } catch (err) {
       push(
         err instanceof ApiError
@@ -581,13 +641,13 @@ export function ResetPasswordPage() {
         <Button
           className="w-full"
           size="lg"
-          onClick={() => navigate("forgot-password")}
+          onClick={() => navigate("/forgot-password")}
         >
           Request a new link
         </Button>
         <button
           type="button"
-          onClick={() => navigate("login")}
+          onClick={() => navigate("/login")}
           className="block mx-auto mt-5 text-xs text-slate-500 hover:text-slate-300"
         >
           Back to sign in
@@ -625,7 +685,7 @@ export function ResetPasswordPage() {
 
       <button
         type="button"
-        onClick={() => navigate("login")}
+        onClick={() => navigate("/login")}
         className="block mx-auto mt-5 text-xs text-slate-500 hover:text-slate-300"
       >
         Back to sign in

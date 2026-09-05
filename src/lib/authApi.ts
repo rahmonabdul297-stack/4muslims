@@ -34,7 +34,7 @@ export async function logout() {
 
 export async function getMe() {
   const res = await apiRequestEnveloped<User>("/auth/me");
-  return res.data as User;
+  return res.data;
 }
 
 export async function checkSession(): Promise<boolean> {

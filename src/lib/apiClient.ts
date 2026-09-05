@@ -1,5 +1,5 @@
 const API_BASE =
-  import.meta.env.VITE_API_BASE_URL;
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:9999/api/v1";
 
 export class ApiError extends Error {
   status: number;
@@ -10,9 +10,10 @@ export class ApiError extends Error {
 }
 
 interface Envelope<T> {
-  success: boolean;
-  message: string;
+  success?: boolean;
+  message?: string;
   data?: T;
+  user?: T;
   count?: number;
 }
 
@@ -28,9 +29,9 @@ let refreshPromise: Promise<boolean> | null = null;
 
 async function doRefresh(): Promise<boolean> {
   if (!refreshPromise) {
-    refreshPromise = fetch(`${API_BASE}/auth/refresh`, {
+    refreshPromise = rawRequest("/auth/refresh", {
       method: "POST",
-      credentials: "include",
+      skipAuthRetry: true,
     })
       .then((res) => res.ok)
       .catch(() => false)
@@ -63,7 +64,7 @@ async function rawRequest(
   });
 }
 
-/** Sends a request, unwraps the {success,message,data} envelope, and auto-retries once after a 401 refresh. */
+/** Sends a request and auto-retries once after a 401 refresh. */
 export async function apiRequest<T = unknown>(
   path: string,
   options: RequestOptions = {},
@@ -93,12 +94,31 @@ export async function apiRequest<T = unknown>(
   return json as T;
 }
 
-/** For endpoints that return the standard {success,message,data} envelope. */
+/** For endpoints that return data directly, enveloped in `{ data }`, or `{ user }`. */
 export async function apiRequestEnveloped<T = unknown>(
   path: string,
   options: RequestOptions = {},
-): Promise<Envelope<T>> {
-  return apiRequest<Envelope<T>>(path, options);
+): Promise<T> {
+  const res = await apiRequest<Envelope<T> | T>(path, options);
+
+  if (res && typeof res === "object") {
+    // 1. If wrapped inside `data` property
+    if ("data" in res && res.data !== undefined && res.data !== null) {
+      return res.data as T;
+    }
+
+    // 2. If wrapped inside `user` property
+    if ("user" in res && res.user !== undefined && res.user !== null) {
+      return res.user as T;
+    }
+  }
+
+  // 3. Fallback: return the payload directly if not enveloped
+  if (res !== undefined && res !== null) {
+    return res as T;
+  }
+
+  throw new ApiError("No valid data returned in response", 500);
 }
 
 export { API_BASE };

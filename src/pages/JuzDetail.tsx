@@ -68,7 +68,7 @@ export function JuzDetailPage() {
   return (
     <div className="max-w-4xl mx-auto pb-32">
       <div className="flex items-center justify-between mb-5">
-        <Button variant="ghost" size="sm" onClick={() => navigate("quran")}>
+        <Button variant="ghost" size="sm" onClick={() => navigate("/quran")}>
           <ArrowLeft className="w-4 h-4" /> Back to Quran
         </Button>
         <div className="flex items-center gap-2">
@@ -92,7 +92,9 @@ export function JuzDetailPage() {
       </div>
 
       <GlassCard className="p-6 mb-6 text-center">
-        <h2 className="text-lg font-bold text-ink-text">Juz {quranJuzNumber}</h2>
+        <h2 className="text-lg font-bold text-ink-text">
+          Juz {quranJuzNumber}
+        </h2>
       </GlassCard>
 
       {loading ? (

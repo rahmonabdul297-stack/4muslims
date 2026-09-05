@@ -1,4 +1,12 @@
 import { Suspense, lazy, useEffect } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+  useNavigate,
+} from "react-router-dom";
 import { AppProvider, useApp } from "@/store";
 import { ToastProvider } from "@/toast";
 import { ThemeProvider } from "@/theme";
@@ -9,8 +17,7 @@ import { LandingPage } from "@/pages/Landing";
 import { LoginPage } from "@/pages/Auth";
 import { Loader2 } from "lucide-react";
 
-// Everything besides the landing/login pages is lazy-loaded so the initial
-// bundle only ships what's needed for the first paint.
+// Lazy-loaded components
 const RegisterPage = lazy(() =>
   import("@/pages/Auth").then((m) => ({ default: m.RegisterPage })),
 );
@@ -73,16 +80,6 @@ const AdminVideosPage = lazy(() =>
   import("@/pages/AdminVideos").then((m) => ({ default: m.AdminVideosPage })),
 );
 
-const PUBLIC_ROUTES = new Set([
-  "landing",
-  "login",
-  "register",
-  "verify",
-  "forgot-password",
-  "reset-password",
-  "payment-verify",
-]);
-
 function PageFallback() {
   return (
     <div className="min-h-screen flex items-center justify-center">
@@ -91,68 +88,84 @@ function PageFallback() {
   );
 }
 
-function Router() {
-  const { route, authLoading, user, navigate } = useApp();
-
-  // Guard against rendering protected pages when there's no authenticated
-  // user (e.g. a login response arrived without a valid session cookie).
-  const isProtectedRoute = !PUBLIC_ROUTES.has(route);
-  useEffect(() => {
-    if (!authLoading && isProtectedRoute && !user) {
-      navigate("login");
-    }
-  }, [authLoading, isProtectedRoute, user, navigate]);
+// Wrapper to secure protected routes
+function ProtectedLayout() {
+  const { authLoading, user } = useApp();
 
   if (authLoading) return <PageFallback />;
+  if (!user) return <Navigate to="/login" replace />;
 
-  if (route === "landing") return <LandingPage />;
-  if (route === "login") return <LoginPage />;
+  return (
+    <DashboardLayout>
+      <Outlet />
+    </DashboardLayout>
+  );
+}
 
-  if (isProtectedRoute && !user) return <PageFallback />;
+// Wrapper to prevent logged-in users from seeing login/landing if needed,
+// or simply rendering public routes with authentication checks
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { authLoading } = useApp();
+  if (authLoading) return <PageFallback />;
+  return <>{children}</>;
+}
+
+function AppRoutes() {
+  const { user } = useApp();
 
   return (
     <Suspense fallback={<PageFallback />}>
-      {route === "register" && <RegisterPage />}
-      {route === "verify" && <VerifyPage />}
-      {route === "forgot-password" && <ForgotPasswordPage />}
-      {route === "reset-password" && <ResetPasswordPage />}
-      {route === "payment-verify" && <PaymentVerifyPage />}
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+        <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+        <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+        <Route path="/verify" element={<PublicRoute><VerifyPage /></PublicRoute>} />
+        <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+        <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
+        <Route path="/payment-verify" element={<PublicRoute><PaymentVerifyPage /></PublicRoute>} />
 
-      {isProtectedRoute && (
-        <DashboardLayout>
-          {(route === "create" || route === "dashboard") && <StudioPage />}
-          {route === "history" && <HistoryPage />}
-          {route === "integrations" && <IntegrationsPage />}
-          {route === "autopost" && <AutoPostPage />}
-          {route === "billing" && <BillingPage />}
-          {route === "settings" && <SettingsPage />}
-          {route === "quran" && <QuranHomePage />}
-          {route === "quran-surah" && <SurahDetailPage />}
-          {route === "quran-juz" && <JuzDetailPage />}
-          {route === "prayer-times" && <PrayerTimesPage />}
-          {route === "duas" && <DuasPage />}
-          {route === "quran-favorites" && <QuranFavoritesPage />}
-          {route === "profile" && <ProfilePage />}
-          {route === "admin-videos" && user?.role === "admin" && (
-            <AdminVideosPage />
+        {/* Protected Dashboard Routes */}
+        <Route element={<ProtectedLayout />}>
+          <Route path="/" element={<StudioPage />} />
+          <Route path="/create" element={<StudioPage />} />
+          <Route path="/history" element={<HistoryPage />} />
+          <Route path="/integrations" element={<IntegrationsPage />} />
+          <Route path="/autopost" element={<AutoPostPage />} />
+          <Route path="/billing" element={<BillingPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/quran" element={<QuranHomePage />} />
+          <Route path="/quran-surah" element={<SurahDetailPage />} />
+          <Route path="/quran-juz" element={<JuzDetailPage />} />
+          <Route path="/prayer-times" element={<PrayerTimesPage />} />
+          <Route path="/duas" element={<DuasPage />} />
+          <Route path="/quran-favorites" element={<QuranFavoritesPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          
+          {user?.role === "admin" && (
+            <Route path="/admin-videos" element={<AdminVideosPage />} />
           )}
-        </DashboardLayout>
-      )}
+        </Route>
+
+        {/* Catch-all redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </Suspense>
   );
 }
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <ToastProvider>
-          <AppProvider>
-            <Router />
-            <ToastHost />
-          </AppProvider>
-        </ToastProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+<ThemeProvider>
+  <LanguageProvider>
+    <ToastProvider>
+      <AppProvider>         
+        <BrowserRouter>
+          <AppRoutes />      
+        </BrowserRouter>
+      </AppProvider>
+    </ToastProvider>
+  </LanguageProvider>
+</ThemeProvider>
   );
 }

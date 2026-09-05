@@ -2,8 +2,9 @@ import { apiRequestEnveloped } from "./apiClient";
 import type { User } from "@/types";
 
 export async function getProfile() {
-  const res = await apiRequestEnveloped<User>("/profile/me");
-  return res.data as User;
+  const res = await apiRequestEnveloped<unknown>("/profile/me");
+  console.log(res)
+  return res.data;
 }
 
 export interface UpdateProfilePayload {
@@ -25,5 +26,5 @@ export async function updateProfile(payload: UpdateProfilePayload) {
     body: form,
     isFormData: true,
   });
-  return res.data as User;
+  return res.data;
 }
