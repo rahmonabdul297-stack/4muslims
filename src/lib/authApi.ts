@@ -1,10 +1,9 @@
-import { apiRequest, apiRequestEnveloped, API_BASE } from "./apiClient";
+import { apiRequestEnveloped, API_BASE } from "./apiClient";
 import type { User } from "@/types";
 
 export interface RegisterPayload {
   name: string;
   email: string;
-  phone: string;
   password: string;
 }
 
@@ -56,24 +55,16 @@ export async function forgotPasswordEmail(email: string) {
   });
 }
 
-export async function forgotPasswordSms(phone: string) {
-  return apiRequestEnveloped<null>("/auth/SMS/forgot-password", {
-    method: "POST",
-    body: { phone },
-  });
-}
-
-export async function resetPassword(token: string, newPassword: string) {
-  return apiRequestEnveloped<null>("/auth/reset-password", {
+/** token/id come from the emailed reset link's query params. */
+export async function resetPassword(
+  token: string,
+  id: string,
+  password: string,
+) {
+  const query = new URLSearchParams({ token, id }).toString();
+  return apiRequestEnveloped<null>(`/auth/reset-password?${query}`, {
     method: "PUT",
-    body: { token, newPassword },
-  });
-}
-
-export async function resetPasswordOtp(otp: string, newPassword: string) {
-  return apiRequestEnveloped<null>("/auth/OTP/reset-password", {
-    method: "PUT",
-    body: { otp, newPassword },
+    body: { password },
   });
 }
 
@@ -83,9 +74,7 @@ export function googleLoginUrl() {
 
 type SocialProvider = "youtube" | "facebook" | "tiktok";
 
-export async function getSocialConnectUrl(provider: SocialProvider) {
-  const res = await apiRequest<{ success: boolean; url: string }>(
-    `/auth/${provider}/connect`,
-  );
-  return res.url;
+/** These are full-page redirects (OAuth consent hop), not fetch calls. */
+export function socialConnectUrl(provider: SocialProvider) {
+  return `${API_BASE}/auth/${provider}/connect`;
 }

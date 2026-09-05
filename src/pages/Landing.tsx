@@ -20,19 +20,13 @@ import { languages } from "@/translations";
 import { Button, GlassCard, Badge } from "@/components/ui";
 import { TemplateThumbnail } from "@/components/TemplateThumb";
 import { templates, surahs, pricingPlans } from "@/data";
+import Advert from "./advert";
 
 function Logo() {
   return (
-    <div className="flex items-center gap-3">
-      <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-deep to-emerald-mint flex items-center justify-center shadow-glow">
-        <Sparkles className="w-5 h-5 text-white" />
-        <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-md bg-gold flex items-center justify-center">
-          <Clapperboard className="w-2.5 h-2.5 text-white" />
-        </span>
-      </div>
-      <span className="text-lg font-bold text-ink-text tracking-tight">
-        4Muslims
-      </span>
+    <div className="flex flex-col items-start">
+      <img src="/images/4muslims_logo.png" className="h-12 w-[150px]" />
+      <i className="text-[8px] px-3 text-[#767373]">Qur'an Studio.</i>
     </div>
   );
 }
@@ -103,7 +97,7 @@ export function LandingPage() {
     <div className="min-h-screen">
       {/* Nav */}
       <header className="sticky top-0 z-30 glass-strong border-b border-ink-overlay/[0.06]">
-        <div className="max-w-7xl mx-auto px-5 lg:px-8 py-4 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-5 lg:px-8 py-2 flex items-center justify-between gap-4">
           <Logo />
           <div className="flex items-center gap-3">
             <QuickSettings />
@@ -173,14 +167,7 @@ export function LandingPage() {
           </div>
 
           <div className="relative flex justify-center animate-fade-in">
-            <div className="relative w-56 sm:w-64">
-              <TemplateThumbnail
-                template={templates[0]}
-                surahArabic={surahs[0].arabic}
-                className="aspect-[9/16] shadow-glow"
-              />
-              <div className="absolute -inset-6 bg-emerald-mint/10 blur-3xl -z-10 rounded-full" />
-            </div>
+           <Advert/>
           </div>
         </div>
       </section>
@@ -220,9 +207,6 @@ export function LandingPage() {
       <section className="max-w-7xl mx-auto px-5 lg:px-8 py-16">
         <GlassCard className="p-8 lg:p-12 grid lg:grid-cols-2 gap-10 items-center">
           <div>
-            <div className="w-12 h-12 rounded-xl bg-gold/15 flex items-center justify-center mb-5">
-              <Zap className="w-6 h-6 text-gold-light" />
-            </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-ink-text tracking-tight mb-2">
               {t("landing.studio.title")}
             </h2>
@@ -251,16 +235,6 @@ export function LandingPage() {
               {t("landing.pricing.cta")}
               <ArrowRight className="w-4 h-4" />
             </Button>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {templates.slice(0, 4).map((tpl) => (
-              <TemplateThumbnail
-                key={tpl.id}
-                template={tpl}
-                surahArabic={surahs[1].arabic}
-                className="aspect-[9/16] rounded-xl"
-              />
-            ))}
           </div>
         </GlassCard>
       </section>
@@ -300,7 +274,7 @@ export function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-ink-overlay/[0.06] py-10">
+      <footer className="border-t border-ink-overlay/[0.06] py-10 bg-black">
         <div className="max-w-7xl mx-auto px-5 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <Logo />
           <p className="text-sm text-ink-subtle text-center flex items-center gap-1.5">

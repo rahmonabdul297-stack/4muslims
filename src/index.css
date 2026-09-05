@@ -118,3 +118,325 @@
     border-radius: 3px;
   }
 }
+    /* PHONE BODY */
+    .iphone {
+      width: 360px;
+      height: 600px;
+      padding: 9px;
+      border-radius: 58px;
+      position: relative;
+      background: linear-gradient(
+        135deg,
+        #374151,
+        #111827,
+        #4b5563
+      );
+
+      box-shadow:
+        0 35px 80px rgba(0, 0, 0, 0.7),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2);
+    }
+
+    /* SCREEN */
+    .screen {
+      width: 100%;
+      height: 100%;
+      border-radius: 50px;
+      overflow: hidden;
+      position: relative;
+      background: #000;
+    }
+
+    /* REEL VIDEO BACKGROUND */
+    .reel-video {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      bottom: 100px;
+    
+    }
+
+    /* DYNAMIC ISLAND */
+    .dynamic-island {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 34px;
+      background: #000;
+      border-radius: 25px;
+      z-index: 20;
+    }
+
+    /* STATUS BAR */
+    .status-bar {
+      position: absolute;
+      top: 22px;
+      left: 0;
+      width: 100%;
+      padding: 0 28px;
+
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      color: white;
+      font-size: 13px;
+      font-weight: bold;
+
+      z-index: 15;
+    }
+
+    .status-icons {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+    }
+
+    /* TOP REELS NAVIGATION */
+    .reels-header {
+      position: absolute;
+      top: 75px;
+      left: 0;
+      width: 100%;
+
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      padding: 0 20px;
+
+      color: white;
+      z-index: 10;
+    }
+
+    .reels-title {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .camera-icon {
+      font-size: 23px;
+    }
+
+    /* RIGHT ACTION BUTTONS */
+    .reel-actions {
+      position: absolute;
+      right: 15px;
+      bottom: 125px;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+
+      color: white;
+      z-index: 10;
+    }
+
+    .action {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .action-icon {
+      width: 52px;
+      height: 52px;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      border-radius: 50%;
+
+      font-size: 28px;
+
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(10px);
+    }
+
+    .action-count {
+      margin-top: 5px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .action:hover {
+      transform: scale(1.08);
+    }
+
+    /* BOTTOM REEL CONTENT */
+    .reel-info {
+      position: absolute;
+      left: 18px;
+      right: 80px;
+      bottom: 45px;
+
+      color: white;
+      z-index: 10;
+    }
+
+    /* USER */
+    .user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+
+      border: 2px solid white;
+
+      background-image:
+        url("/images/avatar.jpg");
+
+      background-size: cover;
+      background-position: center;
+    }
+
+    .username {
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    .follow-btn {
+      border: 1px solid white;
+      border-radius: 6px;
+
+      padding: 5px 10px;
+
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    /* CAPTION */
+    .caption {
+      font-size: 14px;
+      line-height: 1.4;
+      margin-bottom: 10px;
+    }
+
+    /* MUSIC */
+    .music {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      font-size: 13px;
+
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .music-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* PROGRESS BAR */
+    .progress {
+      position: absolute;
+
+      left: 15px;
+      right: 15px;
+      bottom: 28px;
+
+      height: 3px;
+
+      background: rgba(255, 255, 255, 0.35);
+
+      border-radius: 20px;
+
+      z-index: 15;
+    }
+
+    .progress-fill {
+      width: 42%;
+      height: 100%;
+
+      background: white;
+      border-radius: 20px;
+    }
+
+    /* HOME INDICATOR */
+    .home-indicator {
+      position: absolute;
+
+      bottom: 8px;
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      width: 120px;
+      height: 5px;
+
+      background: white;
+      border-radius: 10px;
+
+      z-index: 20;
+    }
+
+    /* PHONE SIDE BUTTONS */
+
+    .action-button,
+    .volume-up,
+    .volume-down {
+      position: absolute;
+      left: -4px;
+
+      width: 4px;
+
+      background: #374151;
+      border-radius: 4px 0 0 4px;
+    }
+
+    .action-button {
+      top: 100px;
+      height: 35px;
+    }
+
+    .volume-up {
+      top: 155px;
+      height: 60px;
+    }
+
+    .volume-down {
+      top: 230px;
+      height: 60px;
+    }
+
+    .power-button {
+      position: absolute;
+
+      right: -4px;
+      top: 185px;
+
+      width: 4px;
+      height: 85px;
+
+      background: #374151;
+      border-radius: 0 4px 4px 0;
+    }
+
+    @media (max-width: 450px) {
+      .iphone {
+        transform: scale(0.85);
+      }
+    }
+.reel-video {
+  position: absolute;
+  /* padding: 50px 0px; */
+  /* top: 50%; */
+  /* inset: 0; */
+  width: 100%;
+  height: 60%;
+  /* object-fit: cover; */
+}

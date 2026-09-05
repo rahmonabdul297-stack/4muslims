@@ -153,29 +153,33 @@ export function ProfilePage() {
         { connected?: boolean; handle?: string } | undefined,
       ][])
     : [];
-
+    // const [coverBg, setcoverBg] =useState("")
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-full">
       {/* Header / account details */}
-      <GlassCard className="p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <label
-              className={`relative ${editing ? "cursor-pointer group" : ""}`}
-            >
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-deep to-emerald-mint flex items-center justify-center overflow-hidden shrink-0">
+      <div className={`relative bg-[url('/images/cover-bg.png')] bg-cover bg-center h-[250px] mb-12`}>
+            <div className="absolute top-3/4 left-10 w-[100px] h-[100px] rounded-[50%] bg-gradient-to-br from-emerald-deep to-emerald-mint flex items-center justify-center overflow-hidden shrink-0">
                 {preview ? (
                   <img
                     src={preview}
                     alt="Profile"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover "
                   />
                 ) : (
-                  <span className="text-lg font-bold text-white">
-                    {(name || "?").slice(0, 2).toUpperCase()}
+                  <span className="text-2xl font-bold text-white">
+                    {(name || "A").slice(0, 2).toUpperCase()}
                   </span>
                 )}
               </div>
+          </div>
+      <GlassCard className="p-6">
+        <div className="flex items-start justify-between gap-4">
+          
+          <div className="flex items-center gap-4">
+            <label
+              className={`relative ${editing ? "cursor-pointer group" : ""}`}
+            >
+              
               {editing && (
                 <>
                   <div className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
@@ -284,7 +288,7 @@ export function ProfilePage() {
           <div className="mt-6">
             <InfoRow label="Full Name" value={profile.name} />
             <InfoRow label="Email" value={profile.email} />
-            <InfoRow label="Phone" value={profile.phone ?? "—"} />
+            <InfoRow label="Phone" value={profile.phone} />
             <InfoRow
               label="Sign-in Method"
               value={<span className="capitalize">{profile.authProvider}</span>}

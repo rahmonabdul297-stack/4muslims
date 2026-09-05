@@ -2,9 +2,7 @@ import { Youtube, Facebook, Music2, CheckCircle2, Link2 } from "lucide-react";
 import { GlassCard, Badge, Button } from "@/components/ui";
 import { integrationPlatforms } from "@/data";
 import { useApp } from "@/store";
-import { useToast } from "@/toast";
-import { ApiError } from "@/lib/apiClient";
-import { getSocialConnectUrl } from "@/lib/authApi";
+import { socialConnectUrl } from "@/lib/authApi";
 import type { AutoPostPlatform } from "@/types";
 
 const platformIcons: Record<AutoPostPlatform, typeof Youtube> = {
@@ -15,18 +13,9 @@ const platformIcons: Record<AutoPostPlatform, typeof Youtube> = {
 
 export function IntegrationsPage() {
   const { user } = useApp();
-  const { push } = useToast();
 
-  const connect = async (key: AutoPostPlatform) => {
-    try {
-      const url = await getSocialConnectUrl(key);
-      window.location.href = url;
-    } catch (err) {
-      push(
-        err instanceof ApiError ? err.message : `Unable to connect ${key}.`,
-        "error",
-      );
-    }
+  const connect = (key: AutoPostPlatform) => {
+    window.location.href = socialConnectUrl(key);
   };
 
   return (

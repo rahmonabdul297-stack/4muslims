@@ -29,23 +29,23 @@ const en: Dict = {
   "nav.free": "Free",
   "nav.home": "Home",
 
-  "landing.badge": "AI Verse Studio + Free Quran Companion",
-  "landing.title": "Create stunning Quran videos.",
-  "landing.titleHighlight": "Read, listen & pray — always free.",
+  "landing.badge": "Qur'an Studio + Free Quran Companion",
+  "landing.title": "Read, listen & reflect the word of Allah.",
+  "landing.titleHighlight": "Create stunning Quran videos..",
   "landing.subtitle":
-    "4Muslims pairs an AI-powered verse video studio for da'wah creators with a complete Quran companion — reader, audio, prayer times, and duas — free for every user, on every plan.",
+    "4Muslims pairs an Qur'an studio for da'wah creators with a complete Quran companion reader, audio, prayer times, and duas — free for every user, on every plan.",
   "landing.ctaPrimary": "Get Started Free",
   "landing.ctaSecondary": "Sign In",
   "landing.statSurahs": "114 Surahs",
-  "landing.statReciters": "5 Reciters",
+  "landing.statReciters": "Best Reciters",
   "landing.statFree": "100% Free Quran Tools",
 
-  "landing.studio.title": "AI Verse Video Studio",
+  "landing.studio.title": "Qur'an Studio",
   "landing.studio.subtitle": "For creators & da'wah pages",
   "landing.studio.desc":
     "Turn any ayah into a beautiful, shareable vertical video in minutes — pick a surah, a reciter, and a template, and let the studio render it for you.",
   "landing.studio.f1": "Cinematic templates with motion & Arabic typography",
-  "landing.studio.f2": "5 world-renowned reciters",
+  "landing.studio.f2": "world-best reciters",
   "landing.studio.f3": "Auto-post to YouTube, TikTok & Facebook (PRO)",
 
   "landing.free.title": "Free for every user, forever",

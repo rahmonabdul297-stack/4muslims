@@ -140,21 +140,9 @@ export function Sidebar() {
   );
 
   const Logo = () => (
-    <div className="px-5 py-5 flex items-center gap-3">
-      <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-deep to-emerald-mint flex items-center justify-center shadow-glow">
-        <Sparkles className="w-5 h-5 text-white" />
-        <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-md bg-gold flex items-center justify-center">
-          <Clapperboard className="w-2.5 h-2.5 text-white" />
-        </span>
-      </div>
-      <div>
-        <h1 className="text-base font-bold text-ink-text tracking-tight">
-          4Muslims
-        </h1>
-        <p className="text-[10px] text-slate-500 tracking-wider uppercase">
-          AI Verse Studio
-        </p>
-      </div>
+   <div className="flex flex-col items-start">
+      <img src="/images/4muslims_logo.png" className="h-12 w-[150px]" />
+       <i className="text-[8px] px-3 text-[#767373]">Qur'an Studio.</i>
     </div>
   );
 

@@ -5,11 +5,9 @@ import {
   Mail,
   Lock,
   User,
-  Phone,
   ArrowRight,
   CheckCircle2,
-  KeyRound,
-  MessageSquare,
+  Eye,
 } from "lucide-react";
 import { Button, Input, Field } from "@/components/ui";
 import { TemplateThumbnail } from "@/components/TemplateThumb";
@@ -22,9 +20,7 @@ import {
   register as apiRegister,
   verifyAccount,
   forgotPasswordEmail,
-  forgotPasswordSms,
   resetPassword,
-  resetPasswordOtp,
   googleLoginUrl,
 } from "@/lib/authApi";
 
@@ -41,35 +37,18 @@ function AuthShell({ children }: { children: ReactNode }) {
           }}
         />
         <div className="relative z-10 max-w-sm">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-deep to-emerald-mint flex items-center justify-center shadow-glow">
-              <Sparkles className="w-6 h-6 text-white" />
-              <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-md bg-gold flex items-center justify-center">
-                <Clapperboard className="w-3 h-3 text-white" />
-              </span>
+          <div className="h-[300px] flex items-center gap-3 mb-8">
+            <div className="flex flex-col items-start">
+              <img src="/images/4muslims_logo.png" className="h-full w-full" />
+              <i className="text-[8px] px-3 text-[#767373]">Qur'an Studio.</i>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-ink-text">4Muslims</h1>
-              <p className="text-[11px] text-slate-500 uppercase tracking-wider">
-                AI Verse Studio
-              </p>
-            </div>
-          </div>
-
-          <div className="relative w-48 mx-auto mb-8">
-            <TemplateThumbnail
-              template={templates[0]}
-              surahArabic={surahs[0].arabic}
-              className="aspect-[9/16] shadow-glow"
-            />
-            <div className="absolute -inset-4 bg-emerald-mint/10 blur-2xl -z-10 rounded-full" />
           </div>
 
           <h2 className="text-2xl font-bold text-ink-text text-center mb-2">
             Create Beautiful Quran Videos
           </h2>
           <p className="text-sm text-slate-400 text-center leading-relaxed">
-            AI-powered verse video generator with auto-posting to your social
+         Qur'an video generator with auto-posting to your social
             platforms. Spread da'wah, one frame at a time.
           </p>
 
@@ -94,10 +73,10 @@ function AuthShell({ children }: { children: ReactNode }) {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-sm animate-fade-in">
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-deep to-emerald-mint flex items-center justify-center shadow-glow">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-xl font-bold text-ink-text">4Muslims</h1>
+           <div className="flex flex-col items-start">
+      <img src="/images/4muslims_logo.png" className="h-12 w-[150px]" />
+       <i className="text-[8px] px-3 text-[#767373]">Qur'an Studio.</i>
+    </div>
           </div>
           {children}
         </div>
@@ -143,6 +122,7 @@ export function LoginPage() {
   const { push } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPass,setShowpass]= useState(false)
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     {},
   );
@@ -165,16 +145,23 @@ export function LoginPage() {
     e.preventDefault();
     const errs: typeof errors = {};
     if (!email.includes("@")) errs.email = "Enter a valid email address";
-    if (password.length < 6)
-      errs.password = "Password must be at least 6 characters";
+    if (password.length < 8)
+      errs.password = "Password must be at least 8 characters";
     setErrors(errs);
     if (Object.keys(errs).length) return;
     setLoading(true);
     try {
       await apiLogin(email, password);
-      await refreshUser();
+      const me = await refreshUser();
+      if (!me) {
+        push(
+          "Signed in, but no session was returned. Please try again.",
+          "error",
+        );
+        return;
+      }
       push("Welcome back!", "success");
-      navigate("create");
+      navigate("profile");
     } catch (err) {
       push(
         err instanceof ApiError
@@ -209,7 +196,7 @@ export function LoginPage() {
               <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <Input
                 type="email"
-                placeholder="you@example.com"
+                placeholder="Enter your email"
                 value={email}
                 error={!!errors.email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -222,13 +209,14 @@ export function LoginPage() {
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <Input
-                type="password"
+                type={showPass?"text":"password"}
                 placeholder="••••••••"
                 value={password}
                 error={!!errors.password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10"
               />
+              <Eye className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" onClick={()=>setShowpass(!showPass)}/>
             </div>
           </Field>
 
@@ -274,12 +262,10 @@ export function RegisterPage() {
   const { push } = useToast();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{
     name?: string;
     email?: string;
-    phone?: string;
     password?: string;
   }>({});
   const [loading, setLoading] = useState(false);
@@ -289,14 +275,13 @@ export function RegisterPage() {
     const errs: typeof errors = {};
     if (name.trim().length < 2) errs.name = "Enter your full name";
     if (!email.includes("@")) errs.email = "Enter a valid email address";
-    if (phone.trim().length < 7) errs.phone = "Enter a valid phone number";
-    if (password.length < 6)
-      errs.password = "Password must be at least 6 characters";
+    if (password.length < 8)
+      errs.password = "Password must be at least 8 characters";
     setErrors(errs);
     if (Object.keys(errs).length) return;
     setLoading(true);
     try {
-      await apiRegister({ name, email, phone, password });
+      await apiRegister({ name, email, password });
       push(
         "Account created! Check your email for the verification code.",
         "success",
@@ -360,24 +345,10 @@ export function RegisterPage() {
             </div>
           </Field>
 
-          <Field label="Phone Number" error={errors.phone}>
-            <div className="relative">
-              <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <Input
-                type="tel"
-                placeholder="+234 800 000 0000"
-                value={phone}
-                error={!!errors.phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </Field>
-
           <Field
             label="Password"
             error={errors.password}
-            hint="Minimum 6 characters"
+            hint="Minimum 8 characters"
           >
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -503,31 +474,20 @@ export function VerifyPage() {
 export function ForgotPasswordPage() {
   const { navigate } = useApp();
   const { push } = useToast();
-  const [method, setMethod] = useState<"email" | "sms">("email");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.includes("@")) {
+      push("Enter a valid email address", "error");
+      return;
+    }
     setLoading(true);
     try {
-      if (method === "email") {
-        if (!email.includes("@")) {
-          push("Enter a valid email address", "error");
-          return;
-        }
-        await forgotPasswordEmail(email);
-        push("Password reset link sent to your email.", "success");
-      } else {
-        if (phone.trim().length < 7) {
-          push("Enter a valid phone number", "error");
-          return;
-        }
-        await forgotPasswordSms(phone);
-        push("A reset code was sent to your phone via SMS.", "success");
-      }
-      navigate("reset-password");
+      await forgotPasswordEmail(email);
+      push("Password reset link sent to your email.", "success");
+      navigate("login");
     } catch (err) {
       push(
         err instanceof ApiError
@@ -544,54 +504,22 @@ export function ForgotPasswordPage() {
     <AuthShell>
       <h2 className="text-2xl font-bold text-ink-text mb-1">Forgot password</h2>
       <p className="text-sm text-slate-500 mb-6">
-        Choose how you'd like to receive your password reset instructions.
+        Enter your email and we'll send you a link to reset your password.
       </p>
 
-      <div className="flex gap-1.5 glass rounded-xl p-1 mb-5 w-fit">
-        {(["email", "sms"] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => setMethod(m)}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium capitalize transition ${
-              method === m
-                ? "bg-emerald-mint/15 text-emerald-400"
-                : "text-slate-400 hover:text-ink-text"
-            }`}
-          >
-            {m === "email" ? "Email link" : "SMS code"}
-          </button>
-        ))}
-      </div>
-
       <form onSubmit={submit} className="space-y-4">
-        {method === "email" ? (
-          <Field label="Email">
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <Input
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </Field>
-        ) : (
-          <Field label="Phone Number">
-            <div className="relative">
-              <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <Input
-                type="tel"
-                placeholder="+234 800 000 0000"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </Field>
-        )}
+        <Field label="Email">
+          <div className="relative">
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <Input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </Field>
 
         <Button type="submit" className="w-full" size="lg" loading={loading}>
           Send Reset Instructions
@@ -611,35 +539,21 @@ export function ForgotPasswordPage() {
 }
 
 export function ResetPasswordPage() {
-  const { navigate, resetToken } = useApp();
+  const { navigate, resetToken, resetUserId } = useApp();
   const { push } = useToast();
-  const [method, setMethod] = useState<"token" | "otp">("token");
-  const [token, setToken] = useState(resetToken ?? "");
-  const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword.length < 6) {
-      push("Password must be at least 6 characters", "error");
+    if (!resetToken || !resetUserId) return;
+    if (newPassword.length < 8) {
+      push("Password must be at least 8 characters", "error");
       return;
     }
     setLoading(true);
     try {
-      if (method === "token") {
-        if (!token.trim()) {
-          push("Enter the reset token from your email", "error");
-          return;
-        }
-        await resetPassword(token.trim(), newPassword);
-      } else {
-        if (!otp.trim()) {
-          push("Enter the OTP code sent by SMS", "error");
-          return;
-        }
-        await resetPasswordOtp(otp.trim(), newPassword);
-      }
+      await resetPassword(resetToken, resetUserId, newPassword);
       push("Password reset successfully. Please sign in.", "success");
       navigate("login");
     } catch (err) {
@@ -654,58 +568,43 @@ export function ResetPasswordPage() {
     }
   };
 
+  if (!resetToken || !resetUserId) {
+    return (
+      <AuthShell>
+        <h2 className="text-2xl font-bold text-ink-text mb-1">
+          Invalid or expired link
+        </h2>
+        <p className="text-sm text-slate-500 mb-6">
+          This password reset link is invalid or has expired. Please request a
+          new one.
+        </p>
+        <Button
+          className="w-full"
+          size="lg"
+          onClick={() => navigate("forgot-password")}
+        >
+          Request a new link
+        </Button>
+        <button
+          type="button"
+          onClick={() => navigate("login")}
+          className="block mx-auto mt-5 text-xs text-slate-500 hover:text-slate-300"
+        >
+          Back to sign in
+        </button>
+      </AuthShell>
+    );
+  }
+
   return (
     <AuthShell>
       <h2 className="text-2xl font-bold text-ink-text mb-1">Reset password</h2>
       <p className="text-sm text-slate-500 mb-6">
-        Enter the code or token you received, then choose a new password.
+        Choose a new password for your account.
       </p>
 
-      <div className="flex gap-1.5 glass rounded-xl p-1 mb-5 w-fit">
-        {(["token", "otp"] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => setMethod(m)}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium uppercase transition ${
-              method === m
-                ? "bg-emerald-mint/15 text-emerald-400"
-                : "text-slate-400 hover:text-ink-text"
-            }`}
-          >
-            {m === "token" ? "Email token" : "SMS OTP"}
-          </button>
-        ))}
-      </div>
-
       <form onSubmit={submit} className="space-y-4">
-        {method === "token" ? (
-          <Field label="Reset Token">
-            <div className="relative">
-              <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <Input
-                placeholder="Paste the token from your email"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </Field>
-        ) : (
-          <Field label="OTP Code">
-            <div className="relative">
-              <MessageSquare className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <Input
-                placeholder="6-digit code"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </Field>
-        )}
-
-        <Field label="New Password" hint="Minimum 6 characters">
+        <Field label="New Password" hint="Minimum 8 characters">
           <div className="relative">
             <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <Input

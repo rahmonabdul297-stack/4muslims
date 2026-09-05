@@ -53,6 +53,7 @@ function consumeRedirectLandmark(): {
   notice: OAuthNotice | null;
   paymentReference: string | null;
   resetToken: string | null;
+  resetUserId: string | null;
 } {
   const { pathname, search } = window.location;
   const params = new URLSearchParams(search);
@@ -60,6 +61,7 @@ function consumeRedirectLandmark(): {
   let notice: OAuthNotice | null = null;
   let paymentReference: string | null = null;
   let resetToken: string | null = null;
+  let resetUserId: string | null = null;
 
   if (pathname === "/dashboard") {
     route = "create";
@@ -77,13 +79,14 @@ function consumeRedirectLandmark(): {
   } else if (pathname === "/reset-password" && params.has("token")) {
     route = "reset-password";
     resetToken = params.get("token");
+    resetUserId = params.get("id");
   }
 
   if (pathname !== "/") {
     window.history.replaceState({}, "", "/");
   }
 
-  return { route, notice, paymentReference, resetToken };
+  return { route, notice, paymentReference, resetToken, resetUserId };
 }
 
 interface AppState {
@@ -91,12 +94,13 @@ interface AppState {
   navigate: (r: Route) => void;
   user: User | null;
   authLoading: boolean;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<User | null>;
   logout: () => Promise<void>;
   oauthNotice: OAuthNotice | null;
   clearOauthNotice: () => void;
   paymentReference: string | null;
   resetToken: string | null;
+  resetUserId: string | null;
   quranSurahNumber: number;
   quranJuzNumber: number;
   openSurah: (n: number) => void;
@@ -117,6 +121,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [oauthNotice, setOauthNotice] = useState<OAuthNotice | null>(null);
   const [paymentReference, setPaymentReference] = useState<string | null>(null);
   const [resetToken, setResetToken] = useState<string | null>(null);
+  const [resetUserId, setResetUserId] = useState<string | null>(null);
   const [quranSurahNumber, setQuranSurahNumber] = useState(1);
   const [quranJuzNumber, setQuranJuzNumber] = useState(1);
   const [favorites, setFavorites] = useState<FavoriteAyah[]>(() =>
@@ -145,8 +150,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const me = await getMe();
       setUser(me);
+      return me;
     } catch {
       setUser(null);
+      return null;
     }
   };
 
@@ -157,7 +164,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // ignore — clear local state regardless
     }
     setUser(null);
-    navigate("landing");
+    navigate("login");
   };
 
   useEffect(() => {
@@ -168,6 +175,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (landmark.paymentReference)
         setPaymentReference(landmark.paymentReference);
       if (landmark.resetToken) setResetToken(landmark.resetToken);
+      if (landmark.resetUserId) setResetUserId(landmark.resetUserId);
 
       try {
         const me = await getMe();
@@ -236,6 +244,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         clearOauthNotice: () => setOauthNotice(null),
         paymentReference,
         resetToken,
+        resetUserId,
         quranSurahNumber,
         quranJuzNumber,
         openSurah,
