@@ -27,6 +27,5 @@
 - Vite
 - Tailwind CSS
 - Lucide icons
-- Supabase (`@supabase/supabase-js`)
 
 ## Getting Started
