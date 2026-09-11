@@ -32,17 +32,21 @@ export async function logout() {
   return apiRequestEnveloped<null>("/auth/logout", { method: "POST" });
 }
 
-export async function getMe() {
-  const res = await apiRequestEnveloped<User>("/auth/me");
+export async function getMe(): Promise<User> {
+  const res = await apiRequestEnveloped<{ data: User }>("/auth/profile/me");
   return res.data;
+}
+
+interface SessionResponse {
+  success: boolean;
 }
 
 export async function checkSession(): Promise<boolean> {
   try {
-    const res = await apiRequestEnveloped<null>("/auth/check-session", {
+    const res = await apiRequestEnveloped<SessionResponse>("/auth/check-session", {
       skipAuthRetry: true,
     });
-    return res.success;
+    return res?.success ?? false;
   } catch {
     return false;
   }

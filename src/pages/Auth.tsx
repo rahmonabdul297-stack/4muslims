@@ -209,7 +209,7 @@ export function LoginPage() {
     } catch (err) {
       push(
         err instanceof ApiError
-          ? err.message
+          ? err.message // server msg
           : "Unable to sign in. Please try again.",
         "error",
       );
@@ -381,7 +381,7 @@ export function RegisterPage() {
             <div className="relative">
               <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <Input
-                placeholder="Adebayo Ibrahim"
+                placeholder="Enter your full name"
                 value={name}
                 error={!!errors.name}
                 onChange={(e) => setName(e.target.value)}
@@ -395,7 +395,7 @@ export function RegisterPage() {
               <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <Input
                 type="email"
-                placeholder="you@example.com"
+                placeholder="Enter your email"
                 value={email}
                 error={!!errors.email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -572,7 +572,7 @@ export function ForgotPasswordPage() {
             <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <Input
               type="email"
-              placeholder="you@example.com"
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="pl-10"
@@ -614,7 +614,7 @@ export function ResetPasswordPage() {
     try {
       await resetPassword(resetToken, resetUserId, newPassword);
       push("Password reset successfully. Please sign in.", "success");
-      navigate("/login");
+      navigate("login");
     } catch (err) {
       push(
         err instanceof ApiError
@@ -640,13 +640,13 @@ export function ResetPasswordPage() {
         <Button
           className="w-full"
           size="lg"
-          onClick={() => navigate("/forgot-password")}
+          onClick={() => navigate("forgot-password")}
         >
           Request a new link
         </Button>
         <button
           type="button"
-          onClick={() => navigate("/login")}
+          onClick={() => navigate("login")}
           className="block mx-auto mt-5 text-xs text-slate-500 hover:text-slate-300"
         >
           Back to sign in
@@ -684,7 +684,7 @@ export function ResetPasswordPage() {
 
       <button
         type="button"
-        onClick={() => navigate("/login")}
+        onClick={() => navigate("login")}
         className="block mx-auto mt-5 text-xs text-slate-500 hover:text-slate-300"
       >
         Back to sign in
