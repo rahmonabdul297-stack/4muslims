@@ -131,45 +131,45 @@ export function LoginPage() {
     {},
   );
   const [loading, setLoading] = useState(false);
-//   const SIGN_URL = `${import.meta.env.VITE_API_BASE_URL}/auth/login`;
-//  const signIn = async () => {
-//   try {
-//     const response = await fetch(SIGN_URL, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//         Accept: "application/json",
-//       },
-//       body: JSON.stringify({ email, password }),
-//     });
+  //   const SIGN_URL = `${import.meta.env.VITE_API_BASE_URL}/auth/login`;
+  //  const signIn = async () => {
+  //   try {
+  //     const response = await fetch(SIGN_URL, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Accept: "application/json",
+  //       },
+  //       body: JSON.stringify({ email, password }),
+  //     });
 
-//     const data = await response.json();
+  //     const data = await response.json();
 
-//     if (!response.ok) {
-//       throw new Error(
-//         data.message || "Invalid credentials. Please try again."
-//       );
-//     }
+  //     if (!response.ok) {
+  //       throw new Error(
+  //         data.message || "Invalid credentials. Please try again."
+  //       );
+  //     }
 
-//     // 1. Store auth credentials
-//     if (data.token) {
-//       localStorage.setItem("token", data.token);
-//     }
+  //     // 1. Store auth credentials
+  //     if (data.token) {
+  //       localStorage.setItem("token", data.token);
+  //     }
 
-//     // 2. Refresh global user state so protected routes register the login
-//     await refreshUser(); 
+  //     // 2. Refresh global user state so protected routes register the login
+  //     await refreshUser();
 
-//     push("Logged in successfully!", "success");
+  //     push("Logged in successfully!", "success");
 
-//     // 3. Navigate ONLY after successful token storage & state update
-//     navigate("/profile");
+  //     // 3. Navigate ONLY after successful token storage & state update
+  //     navigate("/profile");
 
-//   } catch (error) {
-//     const errorMessage = (error as Error).message;
-//     console.error("Login failed:", errorMessage);
-//     push(errorMessage, "error");
-//   }
-// };
+  //   } catch (error) {
+  //     const errorMessage = (error as Error).message;
+  //     console.error("Login failed:", errorMessage);
+  //     push(errorMessage, "error");
+  //   }
+  // };
 
   // Fix 1: Properly track dependencies to catch OAuth redirects
   useEffect(() => {
@@ -197,7 +197,6 @@ export function LoginPage() {
     try {
       await apiLogin(email, password);
       const me = await refreshUser();
-      console.log(me)
       if (!me) {
         push(
           "Signed in, but no session was returned. Please try again.",
@@ -235,7 +234,7 @@ export function LoginPage() {
           <div className="flex-1 h-px bg-ink-overlay/10" />
         </div>
 
-        <form onSubmit={submit}  className="space-y-4">
+        <form onSubmit={submit} className="space-y-4">
           <Field label="Email" error={errors.email}>
             <div className="relative">
               <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />

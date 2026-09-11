@@ -117,13 +117,62 @@ function AppRoutes() {
     <Suspense fallback={<PageFallback />}>
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
-        <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-        <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-        <Route path="/verify" element={<PublicRoute><VerifyPage /></PublicRoute>} />
-        <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-        <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
-        <Route path="/payment-verify" element={<PublicRoute><PaymentVerifyPage /></PublicRoute>} />
+        <Route
+          path="/"
+          element={
+            <PublicRoute>
+              <LandingPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <LoginPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <RegisterPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/verify"
+          element={
+            <PublicRoute>
+              <VerifyPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <PublicRoute>
+              <ForgotPasswordPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/reset-password"
+          element={
+            <PublicRoute>
+              <ResetPasswordPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/payment-verify"
+          element={
+            <PublicRoute>
+              <PaymentVerifyPage />
+            </PublicRoute>
+          }
+        />
 
         {/* Protected Dashboard Routes */}
         <Route element={<ProtectedLayout />}>
@@ -141,7 +190,7 @@ function AppRoutes() {
           <Route path="/duas" element={<DuasPage />} />
           <Route path="/quran-favorites" element={<QuranFavoritesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
-          
+
           {user?.role === "admin" && (
             <Route path="/admin-videos" element={<AdminVideosPage />} />
           )}
@@ -156,16 +205,16 @@ function AppRoutes() {
 
 export default function App() {
   return (
-<ThemeProvider>
-  <LanguageProvider>
-    <ToastProvider>
-      <AppProvider>         
-        <BrowserRouter>
-          <AppRoutes />      
-        </BrowserRouter>
-      </AppProvider>
-    </ToastProvider>
-  </LanguageProvider>
-</ThemeProvider>
+    <ThemeProvider>
+      <LanguageProvider>
+        <AppProvider>
+          <ToastProvider>
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </ToastProvider>
+        </AppProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }
